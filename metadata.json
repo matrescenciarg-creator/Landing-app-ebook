@@ -1,0 +1,6 @@
+{
+  "name": "Método Vínculo — Matrescencia",
+  "description": "App + ebook completo Método Vínculo: descifra el llanto, el sueño y las señales de tu bebé sin adivinar por $10 USD.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
