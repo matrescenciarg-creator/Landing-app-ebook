@@ -7,6 +7,7 @@ interface NavbarProps {
   onOpenEbookPreview: () => void;
   onOpenAuth: (mode?: 'login' | 'signup') => void;
   onOpenProfile: () => void;
+  onOpenApp: () => void;
   isUnlocked: boolean;
 }
 
@@ -15,6 +16,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenEbookPreview,
   onOpenAuth,
   onOpenProfile,
+  onOpenApp,
   isUnlocked
 }) => {
   const { user, profile } = useAuth();
@@ -61,7 +63,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           </a>
         </nav>
 
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* App Switcher button */}
+          <button
+            id="nav-open-app-suite-btn"
+            onClick={onOpenApp}
+            className="flex items-center gap-1.5 text-xs font-bold text-[#3d3229] bg-[#fdfaf5] hover:bg-[#f4f1ec] border border-[#d47e62]/40 hover:border-[#d47e62] px-3.5 py-2 rounded-full transition-all shadow-2xs cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#d47e62]" />
+            <span>Usar la App</span>
+          </button>
+
           <button
             id="nav-ebook-preview-btn"
             onClick={onOpenEbookPreview}
@@ -91,7 +103,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-1.5 text-xs font-semibold text-[#3d3229] hover:text-[#d47e62] px-3 py-2 rounded-full transition-colors cursor-pointer"
             >
               <UserIcon className="w-3.5 h-3.5" />
-              <span>Ingresar</span>
+              <span className="hidden sm:inline">Ingresar</span>
             </button>
           )}
 
@@ -104,9 +116,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="nav-cta-buy-btn"
               onClick={onOpenCheckout}
-              className="bg-[#d47e62] hover:bg-[#c46d52] text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 sm:py-2 rounded-full shadow-sm hover:shadow-md active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="bg-[#d47e62] hover:bg-[#c46d52] text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 rounded-full shadow-sm hover:shadow-md active:scale-98 transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <span>Acceso Full · $10</span>
+              <span>Acceso · $10</span>
             </button>
           )}
         </div>

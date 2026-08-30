@@ -4,12 +4,14 @@ import { Sparkles, ShieldCheck, Zap, ArrowRight, HeartHandshake } from 'lucide-r
 interface HeroProps {
   onOpenCheckout: () => void;
   onScrollToDemo: () => void;
+  onOpenApp: () => void;
   isUnlocked: boolean;
 }
 
 export const Hero: React.FC<HeroProps> = ({
   onOpenCheckout,
   onScrollToDemo,
+  onOpenApp,
   isUnlocked
 }) => {
   return (
@@ -32,7 +34,7 @@ export const Hero: React.FC<HeroProps> = ({
             {/* Eyebrow Badge */}
             <div className="inline-flex items-center gap-2 bg-[#f4f1ec] border border-[#eeeae4] text-[#7a6f65] text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full mb-6">
               <Sparkles className="w-3.5 h-3.5 text-[#d4a34b]" />
-              <span>Método Vínculo · App + Ebook</span>
+              <span>Método Vínculo · App Suite + Ebook</span>
             </div>
 
             {/* Main Headline */}
@@ -47,13 +49,22 @@ export const Hero: React.FC<HeroProps> = ({
 
             {/* CTAs */}
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10">
+              <button
+                id="hero-open-app-btn"
+                onClick={onOpenApp}
+                className="w-full sm:w-auto bg-[#3d3229] hover:bg-[#2a221b] text-white px-8 py-4 rounded-2xl font-bold text-base shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-[#dfa745]" />
+                <span>📱 Abrir la App Completa</span>
+              </button>
+
               {isUnlocked ? (
                 <button
                   id="hero-unlocked-btn"
                   onClick={onScrollToDemo}
                   className="w-full sm:w-auto bg-[#d47e62] hover:bg-[#c46d52] text-white px-8 py-4 rounded-2xl font-bold text-base shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Abrir Traductor de Señales</span>
+                  <span>Ver Traductor de Señales</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               ) : (
@@ -66,14 +77,6 @@ export const Hero: React.FC<HeroProps> = ({
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}
-
-              <button
-                id="hero-how-it-works-btn"
-                onClick={onScrollToDemo}
-                className="w-full sm:w-auto bg-white border-2 border-[#d47e62] text-[#d47e62] hover:bg-[#fff9f7] px-8 py-4 rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Ver Señales & Demo</span>
-              </button>
             </div>
 
             {/* Guarantee and trust tags */}

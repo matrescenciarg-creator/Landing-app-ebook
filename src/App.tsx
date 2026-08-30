@@ -19,10 +19,15 @@ import { BitacoraTrackerModal } from './components/BitacoraTrackerModal';
 import { BonusDetailModal } from './components/BonusDetailModal';
 import { AuthModal } from './components/AuthModal';
 import { ProfileModal } from './components/ProfileModal';
+import { AppDashboard, AppTab } from './components/app/AppDashboard';
 import { LogEntry, BonusResource, SignalItem } from './types';
 
 function AppContent() {
   const { user, profile, cloudEntries, addCloudEntry, deleteCloudEntry } = useAuth();
+
+  // App View mode: 'landing' vs 'app'
+  const [viewMode, setViewMode] = useState<'landing' | 'app'>('landing');
+  const [initialAppTab, setInitialAppTab] = useState<AppTab>('decoder');
 
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     try {
@@ -63,6 +68,7 @@ function AppContent() {
         id: 'sample-1',
         timestamp: '14:20 - Hoy',
         babyName: 'Mi Bebé',
+        category: 'hambre',
         signalType: 'Sonido "Neh" (Hambre temprana)',
         calmedWith: 'Pecho / Biberón a demanda',
         notes: 'Identificado a tiempo, tomó con calma sin tragar aire.',
@@ -72,6 +78,7 @@ function AppContent() {
         id: 'sample-2',
         timestamp: '10:15 - Hoy',
         babyName: 'Mi Bebé',
+        category: 'sueno',
         signalType: 'Sonido "Owh" (Ventana de sueño)',
         calmedWith: 'Bajar luces + ritual de 5 min con "Shhh"',
         notes: 'Se durmió plácidamente antes del sobrecansancio.',
@@ -120,6 +127,7 @@ function AppContent() {
       id: Date.now().toString(),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' - Hoy',
       babyName: babyName,
+      category: 'senal',
       signalType: signal.name,
       calmedWith: signal.actionSteps[0] || 'Atención con Método Vínculo',
       notes: `Registrado desde el Traductor. Nivel de confianza: ${signal.confidence}%`,
@@ -133,6 +141,12 @@ function AppContent() {
     setIsAuthOpen(true);
   };
 
+  const openAppTab = (tab: AppTab = 'decoder') => {
+    setInitialAppTab(tab);
+    setViewMode('app');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
@@ -140,15 +154,72 @@ function AppContent() {
     }
   };
 
+  // If in 'app' view mode, render the dedicated App Dashboard Suite
+  if (viewMode === 'app') {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#fdfaf5] text-[#3d3229]">
+        <AppDashboard
+          isUnlocked={isUnlocked}
+          onOpenCheckout={() => setIsCheckoutOpen(true)}
+          onOpenProfile={() => setIsProfileOpen(true)}
+          onReturnToLanding={() => {
+            setViewMode('landing');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          activeEntries={activeEntries}
+          onAddLogEntry={handleAddLogEntry}
+          onDeleteLogEntry={handleDeleteLogEntry}
+          initialTab={initialAppTab}
+        />
+
+        {/* Global Modals */}
+        <AuthModal
+          isOpen={isAuthOpen}
+          initialMode={authMode}
+          onClose={() => setIsAuthOpen(false)}
+          onSuccess={() => {
+            setIsAuthOpen(false);
+            setIsProfileOpen(true);
+          }}
+        />
+
+        <ProfileModal
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          onOpenCheckout={() => {
+            setIsProfileOpen(false);
+            setIsCheckoutOpen(true);
+          }}
+          onOpenEbook={() => {
+            setIsProfileOpen(false);
+            openAppTab('ebook');
+          }}
+          onOpenBitacora={() => {
+            setIsProfileOpen(false);
+            openAppTab('tracker');
+          }}
+        />
+
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          onSuccess={handleCheckoutSuccess}
+        />
+      </div>
+    );
+  }
+
+  // Otherwise render the Landing View
   return (
     <div className="min-h-screen flex flex-col bg-[#fdfaf5] text-[#3d3229]">
       
       {/* Sticky Navigation */}
       <Navbar
         onOpenCheckout={() => setIsCheckoutOpen(true)}
-        onOpenEbookPreview={() => setIsEbookReaderOpen(true)}
+        onOpenEbookPreview={() => openAppTab('ebook')}
         onOpenAuth={openAuthModal}
         onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenApp={() => openAppTab('decoder')}
         isUnlocked={isUnlocked}
       />
 
@@ -159,6 +230,7 @@ function AppContent() {
         <Hero
           onOpenCheckout={() => setIsCheckoutOpen(true)}
           onScrollToDemo={() => scrollToSection('traductor-interactivo')}
+          onOpenApp={() => openAppTab('decoder')}
           isUnlocked={isUnlocked}
         />
 
@@ -183,16 +255,22 @@ function AppContent() {
 
         {/* About Method & Ebook Bundle */}
         <MethodSection
-          onOpenEbookPreview={() => setIsEbookReaderOpen(true)}
+          onOpenEbookPreview={() => openAppTab('ebook')}
           onOpenCheckout={() => setIsCheckoutOpen(true)}
           isUnlocked={isUnlocked}
         />
 
         {/* 3 Bonuses Section */}
         <BonusesSection
-          onOpenBonusModal={(bonus) => setSelectedBonus(bonus)}
+          onOpenBonusModal={(bonus) => {
+            if (bonus.id === 'bono-bitacora') {
+              openAppTab('tracker');
+            } else {
+              openAppTab('bonuses');
+            }
+          }}
           onOpenCheckout={() => setIsCheckoutOpen(true)}
-          onOpenBitacora={() => setIsBitacoraOpen(true)}
+          onOpenBitacora={() => openAppTab('tracker')}
           isUnlocked={isUnlocked}
         />
 
@@ -239,11 +317,11 @@ function AppContent() {
         }}
         onOpenEbook={() => {
           setIsProfileOpen(false);
-          setIsEbookReaderOpen(true);
+          openAppTab('ebook');
         }}
         onOpenBitacora={() => {
           setIsProfileOpen(false);
-          setIsBitacoraOpen(true);
+          openAppTab('tracker');
         }}
       />
 

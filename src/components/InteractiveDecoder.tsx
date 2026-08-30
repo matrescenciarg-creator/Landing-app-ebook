@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SIGNALS_DATABASE } from '../data/signalsData';
 import { SignalItem } from '../types';
+import { soundEngine } from '../utils/audioSynth';
 import { 
   Sparkles, 
   Volume2, 
@@ -242,7 +243,7 @@ export const InteractiveDecoder: React.FC<InteractiveDecoderProps> = ({
                   {SIGNALS_DATABASE.map((signal) => {
                     const isSelected = signal.id === selectedSignalId;
                     return (
-                      <button
+                      <div
                         key={signal.id}
                         onClick={() => setSelectedSignalId(signal.id)}
                         className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
@@ -270,12 +271,25 @@ export const InteractiveDecoder: React.FC<InteractiveDecoderProps> = ({
                             </p>
                           </div>
                         </div>
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${
-                          isSelected ? 'bg-[#d47e62] text-white' : 'bg-[#f4f1ec] text-[#7a6f65]'
-                        }`}>
-                          {signal.confidence}%
-                        </span>
-                      </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundEngine.playSignalCue(signal.id);
+                            }}
+                            className="p-1.5 rounded-lg bg-[#f4f1ec] hover:bg-[#d47e62] text-[#3d3229] hover:text-white transition-colors"
+                            title="Escuchar muestra de sonido"
+                          >
+                            <Volume2 className="w-3.5 h-3.5" />
+                          </button>
+                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                            isSelected ? 'bg-[#d47e62] text-white' : 'bg-[#f4f1ec] text-[#7a6f65]'
+                          }`}>
+                            {signal.confidence}%
+                          </span>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>

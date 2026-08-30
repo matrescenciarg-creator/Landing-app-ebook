@@ -28,14 +28,22 @@ export interface WakeWindowGuide {
   expertAdvice: string;
 }
 
+export type LogCategory = 'senal' | 'lactancia' | 'biberon' | 'sueno' | 'panal';
+
 export interface LogEntry {
   id: string;
   timestamp: string;
   babyName: string;
   signalType: string;
+  category?: LogCategory;
   notes: string;
   calmedWith: string;
   resolved: boolean;
+  // Specific optional fields for comprehensive tracking
+  durationMinutes?: number;
+  breastSide?: 'izquierdo' | 'derecho' | 'ambos';
+  bottleMl?: number;
+  diaperType?: 'humedo' | 'sucio' | 'mixto';
 }
 
 export interface BonusResource {
