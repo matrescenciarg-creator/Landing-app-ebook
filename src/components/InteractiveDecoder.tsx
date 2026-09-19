@@ -93,81 +93,19 @@ export const InteractiveDecoder: React.FC<InteractiveDecoderProps> = ({
 
   // Web Audio Synthesizer for maternal soothing sounds (Shhh, Uterine Heartbeat, White Noise)
   const stopCalmingAudio = () => {
-    if (soundNodeRef.current) {
-      try {
-        soundNodeRef.current.stop();
-        soundNodeRef.current.disconnect();
-      } catch (e) {
-        // ignore
-      }
-      soundNodeRef.current = null;
-    }
+    soundEngine.stop();
     setIsPlayingCalmSound(false);
   };
 
   const startCalmingAudio = (type: 'shhh' | 'heartbeat' | 'whitenoise') => {
-    stopCalmingAudio();
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioCtx();
-      }
-      if (audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume();
-      }
-
-      const ctx = audioCtxRef.current;
-      const bufferSize = ctx.sampleRate * 3; // 3 sec loop
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-
-      if (type === 'shhh' || type === 'whitenoise') {
-        let lastOut = 0.0;
-        for (let i = 0; i < bufferSize; i++) {
-          const white = Math.random() * 2 - 1;
-          // Pink/Brown filter
-          lastOut = (lastOut * 0.94) + (white * 0.06);
-          // Modulate with rhythmic 'shhh' pulse
-          const pulse = type === 'shhh' ? Math.sin((i / ctx.sampleRate) * Math.PI * 1.2) * 0.5 + 0.5 : 0.8;
-          data[i] = lastOut * 0.25 * Math.max(0.1, pulse);
-        }
-      } else {
-        // Heartbeat rhythmic thumps (Lub-Dub)
-        for (let i = 0; i < bufferSize; i++) {
-          const t = (i / ctx.sampleRate) % 1.0; // 60 bpm
-          let sample = 0;
-          if (t >= 0.0 && t < 0.12) {
-            sample = Math.sin(t * Math.PI * 2 * 65) * Math.exp(-t * 25);
-          } else if (t >= 0.25 && t < 0.38) {
-            const t2 = t - 0.25;
-            sample = Math.sin(t2 * Math.PI * 2 * 50) * Math.exp(-t2 * 25) * 0.7;
-          }
-          data[i] = sample * 0.4;
-        }
-      }
-
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-
-      source.connect(gain);
-      gain.connect(ctx.destination);
-      source.start();
-
-      soundNodeRef.current = source;
-      setIsPlayingCalmSound(true);
-      setCalmSoundType(type);
-    } catch (e) {
-      console.warn('Audio synthesis error:', e);
-    }
+    soundEngine.startSound(type, 75);
+    setIsPlayingCalmSound(true);
+    setCalmSoundType(type);
   };
 
   useEffect(() => {
     return () => {
-      stopCalmingAudio();
+      soundEngine.stop();
     };
   }, []);
 
@@ -231,15 +169,42 @@ export const InteractiveDecoder: React.FC<InteractiveDecoderProps> = ({
 
             {/* SOUNDS TAB CONTENT */}
             {activeTab === 'sounds' && (
-              <div className="bg-white rounded-[28px] p-5 md:p-6 shadow-xs border border-[#eeeae4] space-y-3">
-                <div className="flex items-center justify-between mb-2">
+              <div className="bg-white rounded-[28px] p-5 md:p-6 shadow-xs border border-[#eeeae4] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
                   <p className="text-xs font-bold uppercase tracking-wider text-[#7a6f65]">
                     Sonidos biológicos universales
                   </p>
-                  <span className="text-[11px] text-[#688a4d] font-semibold">Toca para traducir</span>
+                  <span className="text-[11px] text-[#d47e62] font-bold">
+                    Toca para escuchar similitud · ¡Es hora de agudizar el oído!
+                  </span>
                 </div>
 
-                <div className="space-y-2">
+                {/* Educational Explanation Box of the 5 Universal Reflex Sounds */}
+                <div className="p-3.5 rounded-2xl bg-[#fdfaf5] border border-[#d47e62]/20 space-y-2 text-xs">
+                  <div className="flex items-center gap-2 text-[#d47e62] font-bold text-xs">
+                    <Sparkles className="w-4 h-4 shrink-0" />
+                    <span>¿Cómo funcionan los sonidos biológicos reflejos?</span>
+                  </div>
+                  <p className="text-[#524439] leading-relaxed text-[11px]">
+                    Antes de que el llanto se vuelva caótico por agotamiento, todo recién nacido emite <strong>sonidos vocales reflejos universales</strong> provocados por la respiración y los movimientos de su lengua, paladar o diafragma:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 text-[11px] text-[#3d3229]">
+                    <div className="p-2 rounded-xl bg-white border border-[#eeeae4]">
+                      <strong>🍼 "Neh" (Hambre):</strong> La lengua sube al paladar por el reflejo de succión generando un sonido nasal.
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-[#eeeae4]">
+                      <strong>🌙 "Owh" (Sueño):</strong> Reflejo de bostezo con labios redondeados antes del sobrecansancio.
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-[#eeeae4]">
+                      <strong>🩹 "Heh" (Incomodidad):</strong> Exhalación corta y jadeante ante frío, calor o pañal mojado.
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-[#eeeae4]">
+                      <strong>⚡ "Eairh" / "Eh":</strong> Gases en el abdomen bajo (pujido tenso) o eructo en el esófago.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-1">
                   {SIGNALS_DATABASE.map((signal) => {
                     const isSelected = signal.id === selectedSignalId;
                     return (
@@ -442,6 +407,31 @@ export const InteractiveDecoder: React.FC<InteractiveDecoderProps> = ({
                 <p className="mt-4 text-sm text-[#7a6f65] leading-relaxed">
                   {currentSignal.description}
                 </p>
+
+                {/* Acoustic sample player banner for current biological signal */}
+                <div className="mt-4 p-3.5 rounded-2xl bg-[#fdfaf5] border border-[#d47e62]/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-[#d47e62]/15 text-[#d47e62] flex items-center justify-center shrink-0">
+                      <Volume2 className="w-4 h-4" />
+                    </div>
+                    <div className="truncate">
+                      <p className="text-xs font-bold text-[#3d3229]">
+                        Ejemplo Acústico Biológico
+                      </p>
+                      <p className="text-[11px] text-[#7a6f65] truncate">
+                        {currentSignal.soundCue}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => soundEngine.playSignalCue(currentSignal.id)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#d47e62] hover:bg-[#c46d52] text-white shadow-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span>Escuchar sonido</span>
+                  </button>
+                </div>
               </div>
 
               {/* Physical Cues Checklist */}

@@ -21,9 +21,10 @@ import { AuthModal } from './components/AuthModal';
 import { ProfileModal } from './components/ProfileModal';
 import { AppDashboard, AppTab } from './components/app/AppDashboard';
 import { LogEntry, BonusResource, SignalItem } from './types';
+import { HOTMART_CONFIG } from './config/hotmart';
 
 function AppContent() {
-  const { user, profile, cloudEntries, addCloudEntry, deleteCloudEntry } = useAuth();
+  const { user, profile, cloudEntries, addCloudEntry, deleteCloudEntry, unlockMembership } = useAuth();
 
   // App View mode: 'landing' vs 'app'
   const [viewMode, setViewMode] = useState<'landing' | 'app'>('landing');
@@ -31,11 +32,32 @@ function AppContent() {
 
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('acceso') === 'hotmart' || urlParams.get('unlocked') === 'true' || urlParams.get('compra') === 'exitosa') {
+        localStorage.setItem('metodo_vinculo_unlocked', 'true');
+        return true;
+      }
       return localStorage.getItem('metodo_vinculo_unlocked') === 'true';
     } catch {
       return false;
     }
   });
+
+  // Check URL parameters for Hotmart purchase redirect
+  useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('acceso') === 'hotmart' || urlParams.get('unlocked') === 'true' || urlParams.get('compra') === 'exitosa') {
+        setIsUnlocked(true);
+        localStorage.setItem('metodo_vinculo_unlocked', 'true');
+        if (user && !profile?.isUnlocked) {
+          unlockMembership();
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [user, profile?.isUnlocked]);
 
   // Sync unlocked status with user profile
   useEffect(() => {
