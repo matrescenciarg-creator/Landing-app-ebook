@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CheckCircle2, X } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -27,8 +28,32 @@ function AppContent() {
   const { user, profile, cloudEntries, addCloudEntry, deleteCloudEntry, unlockMembership } = useAuth();
 
   // App View mode: 'landing' vs 'app'
-  const [viewMode, setViewMode] = useState<'landing' | 'app'>('landing');
+  const [viewMode, setViewMode] = useState<'landing' | 'app'>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (
+        urlParams.get('acceso') === 'hotmart' ||
+        urlParams.get('modo') === 'app' ||
+        urlParams.get('app') === 'true' ||
+        urlParams.get('unlocked') === 'true' ||
+        urlParams.get('compra') === 'exitosa'
+      ) {
+        return 'app';
+      }
+    } catch {
+      // ignore
+    }
+    return 'landing';
+  });
   const [initialAppTab, setInitialAppTab] = useState<AppTab>('decoder');
+  const [hotmartBannerVisible, setHotmartBannerVisible] = useState<boolean>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('acceso') === 'hotmart' || urlParams.get('compra') === 'exitosa';
+    } catch {
+      return false;
+    }
+  });
 
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     try {
@@ -49,6 +74,8 @@ function AppContent() {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('acceso') === 'hotmart' || urlParams.get('unlocked') === 'true' || urlParams.get('compra') === 'exitosa') {
         setIsUnlocked(true);
+        setViewMode('app');
+        setHotmartBannerVisible(true);
         localStorage.setItem('metodo_vinculo_unlocked', 'true');
         if (user && !profile?.isUnlocked) {
           unlockMembership();
@@ -76,6 +103,12 @@ function AppContent() {
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
+  const [profileInitialTab, setProfileInitialTab] = useState<'baby' | 'resources' | 'account' | 'setup'>('setup');
+
+  const openProfile = (tab: 'baby' | 'resources' | 'account' | 'setup' = 'setup') => {
+    setProfileInitialTab(tab);
+    setIsProfileOpen(true);
+  };
 
   // Local storage persisted log entries for guests
   const [localEntries, setLocalEntries] = useState<LogEntry[]>(() => {
@@ -180,10 +213,35 @@ function AppContent() {
   if (viewMode === 'app') {
     return (
       <div className="min-h-screen flex flex-col bg-[#fdfaf5] text-[#3d3229]">
+        {hotmartBannerVisible && (
+          <div className="bg-[#5c7c44] text-white px-4 py-2.5 text-xs sm:text-sm font-medium flex items-center justify-between shadow-xs sticky top-0 z-50">
+            <div className="flex items-center gap-2 max-w-4xl mx-auto flex-wrap">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-[#c8d6ba]" />
+              <span>
+                <strong>¡Acceso Hotmart Activado!</strong> Bienvenida a Método Vínculo.
+              </span>
+              <button
+                type="button"
+                onClick={() => openProfile('setup')}
+                className="ml-2 px-3 py-1 bg-white text-[#5c7c44] font-bold text-xs rounded-full hover:bg-[#f4f1ec] transition-all shrink-0 cursor-pointer shadow-2xs"
+              >
+                Guía de Configuración
+              </button>
+            </div>
+            <button
+              onClick={() => setHotmartBannerVisible(false)}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors cursor-pointer shrink-0 ml-2"
+              title="Cerrar notificación"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <AppDashboard
           isUnlocked={isUnlocked}
           onOpenCheckout={() => setIsCheckoutOpen(true)}
-          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenProfile={() => openProfile('setup')}
           onReturnToLanding={() => {
             setViewMode('landing');
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -220,6 +278,11 @@ function AppContent() {
             setIsProfileOpen(false);
             openAppTab('tracker');
           }}
+          onOpenAuth={(mode) => {
+            setIsProfileOpen(false);
+            openAuthModal(mode === 'login' ? 'login' : 'signup');
+          }}
+          initialTab={profileInitialTab}
         />
 
         <CheckoutModal
@@ -234,13 +297,42 @@ function AppContent() {
   // Otherwise render the Landing View
   return (
     <div className="min-h-screen flex flex-col bg-[#fdfaf5] text-[#3d3229]">
-      
+      {hotmartBannerVisible && (
+        <div className="bg-[#5c7c44] text-white px-4 py-2.5 text-xs sm:text-sm font-medium flex items-center justify-between shadow-xs sticky top-0 z-50">
+          <div className="flex items-center gap-2 max-w-4xl mx-auto flex-wrap">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-[#c8d6ba]" />
+            <span>
+              <strong>¡Acceso Hotmart Activado!</strong> Bienvenida a Método Vínculo.
+            </span>
+            <button
+              onClick={() => openAppTab('decoder')}
+              className="ml-2 px-3 py-1 bg-white text-[#5c7c44] font-bold text-xs rounded-full hover:bg-[#f4f1ec] transition-all shrink-0 cursor-pointer shadow-2xs"
+            >
+              Entrar a la App
+            </button>
+            <button
+              onClick={() => openProfile('setup')}
+              className="px-3 py-1 bg-[#c8d6ba]/30 hover:bg-[#c8d6ba]/50 text-white font-bold text-xs rounded-full border border-[#c8d6ba] transition-all shrink-0 cursor-pointer"
+            >
+              Guía de Configuración
+            </button>
+          </div>
+          <button
+            onClick={() => setHotmartBannerVisible(false)}
+            className="p-1 hover:bg-white/20 rounded-full transition-colors cursor-pointer shrink-0 ml-2"
+            title="Cerrar notificación"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Sticky Navigation */}
       <Navbar
         onOpenCheckout={() => setIsCheckoutOpen(true)}
         onOpenEbookPreview={() => openAppTab('ebook')}
         onOpenAuth={openAuthModal}
-        onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenProfile={() => openProfile('baby')}
         onOpenApp={() => openAppTab('decoder')}
         isUnlocked={isUnlocked}
       />
@@ -345,6 +437,11 @@ function AppContent() {
           setIsProfileOpen(false);
           openAppTab('tracker');
         }}
+        onOpenAuth={(mode) => {
+          setIsProfileOpen(false);
+          openAuthModal(mode === 'login' ? 'login' : 'signup');
+        }}
+        initialTab={profileInitialTab}
       />
 
       <CheckoutModal
